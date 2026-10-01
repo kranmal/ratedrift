@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState, type PropsWithChildren 
 
 type ThemeOverride = 'light' | 'dark' | null;
 
-const STORAGE_KEY = 'lendly-theme-override';
+const STORAGE_KEY = 'ratedrift-theme-override';
 
 const ThemeOverrideContext = createContext<{
   override: ThemeOverride;
