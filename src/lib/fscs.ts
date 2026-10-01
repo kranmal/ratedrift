@@ -151,28 +151,34 @@ export interface GroupExposure {
   unprotectedPence: number;
   accountIds: string[];
   caution?: string;
+  /** True when the brand is not in the table, so its licence is assumed, not known. */
+  unlisted?: boolean;
 }
 
 /**
  * Totals balances per banking licence and flags anything over the FSCS limit.
- * Accounts assigned to the 'other' group are still totalled, but they are a
- * single bucket and the UI should say the grouping is unknown.
+ * A brand missing from the table is treated as its own licence, keyed by the
+ * account's licenceGroupId (one per provider) and flagged `unlisted`. Pooling
+ * all unknown banks into one bucket would invent over-limit warnings, and
+ * the UI says the licence is assumed.
  */
 export function getFscsExposure(accounts: Account[]): GroupExposure[] {
   const byGroup = new Map<string, GroupExposure>();
 
   for (const account of accounts) {
-    const group = getLicenceGroup(account.licenceGroupId);
-    const id = group?.id ?? 'other';
+    const listed = getLicenceGroup(account.licenceGroupId);
+    const group = listed && listed.id !== 'other' ? listed : undefined;
+    const id = group?.id ?? `unlisted:${account.provider.trim().toLowerCase()}`;
     let entry = byGroup.get(id);
     if (!entry) {
       entry = {
         licenceGroupId: id,
-        groupName: group?.name ?? 'Other / not listed',
+        groupName: group?.name ?? account.provider,
         totalPence: 0,
         unprotectedPence: 0,
         accountIds: [],
         caution: group?.caution,
+        unlisted: group ? undefined : true,
       };
       byGroup.set(id, entry);
     }

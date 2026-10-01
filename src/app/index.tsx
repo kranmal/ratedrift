@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { EmptyState } from '@/components/empty-state';
@@ -12,6 +13,7 @@ import { formatPence, getDeadlines, totalAtRiskPence } from '@/lib/interest';
 import { seedDemoAccounts, useStore } from '@/lib/store';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const now = useNow();
   const store = useStore();
 
@@ -28,14 +30,17 @@ export default function HomeScreen() {
       <Screen
         title="RateDrift"
         subtitle={
-          store.accounts.length === 0
+          !store.loaded
+            ? ' '
+            : store.accounts.length === 0
             ? 'Nothing tracked yet.'
             : `${store.accounts.length} account${store.accounts.length === 1 ? '' : 's'}${lapsed ? ` · ${lapsed} already lapsed` : ''}`
         }>
-        {store.accounts.length === 0 ? (
+        {!store.loaded ? null : store.accounts.length === 0 ? (
           <>
             <EmptyState message="Add the savings accounts you hold and RateDrift will tell you what each one costs you if you let it drift." />
-            <PrimaryButton label="Load demo accounts" onPress={seedDemoAccounts} />
+            <PrimaryButton label="Add your first account" onPress={() => router.push('/accounts')} />
+            <PrimaryButton label="Load demo accounts" variant="secondary" onPress={seedDemoAccounts} />
           </>
         ) : (
           <>

@@ -51,6 +51,12 @@ export default function FscsScreen() {
                       ⚠ {formatPence(entry.unprotectedPence)} above the limit, unprotected
                     </ThemedText>
                   ) : null}
+                  {entry.unlisted ? (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      Not in our list, so this is treated as its own licence. It may share one with
+                      another bank you hold, so check it with the FSCS.
+                    </ThemedText>
+                  ) : null}
                   {entry.caution ? (
                     <ThemedText type="small" themeColor="textSecondary">
                       {entry.caution}

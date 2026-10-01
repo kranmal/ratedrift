@@ -175,10 +175,11 @@ test('exposure is sorted worst-breach first', () => {
   assert.equal(getFscsExposure(accounts)[0].licenceGroupId, 'nationwide');
 });
 
-test('an unknown licence falls into the other bucket', () => {
-  const accounts = [account({ licenceGroupId: 'not-a-real-group' })];
+test('an unknown licence is flagged unlisted and keyed by provider', () => {
+  const accounts = [account({ provider: 'Acme', licenceGroupId: 'not-a-real-group' })];
   const [exposure] = getFscsExposure(accounts);
-  assert.equal(exposure.licenceGroupId, 'other');
+  assert.equal(exposure.licenceGroupId, 'unlisted:acme');
+  assert.equal(exposure.unlisted, true);
 });
 
 test('a volatile mapping carries its caution through to the exposure', () => {
@@ -261,4 +262,20 @@ test('an empty portfolio is all zeroes, not NaN', () => {
   assert.deepEqual(getDeadlines([], NOW), []);
   assert.deepEqual(getFscsExposure([]), []);
   assert.equal(totalAtRiskPence([]), 0);
+});
+
+test('unlisted banks are each their own licence, never pooled into one false breach', () => {
+  const a = account({ id: 'a', provider: 'Acme Bank', licenceGroupId: 'other', balancePence: 60_000_00 });
+  const b = account({ id: 'b', provider: 'Zeta Savings', licenceGroupId: 'other', balancePence: 60_000_00 });
+  const exposure = getFscsExposure([a, b]);
+  assert.equal(exposure.length, 2);
+  assert.ok(exposure.every((e) => e.unprotectedPence === 0 && e.unlisted === true));
+});
+
+test('two accounts at the same unlisted bank still total together', () => {
+  const a = account({ id: 'a', provider: 'Acme Bank', licenceGroupId: 'other', balancePence: 60_000_00 });
+  const b = account({ id: 'b', provider: 'ACME bank ', licenceGroupId: 'other', balancePence: 30_000_00 });
+  const [e] = getFscsExposure([a, b]);
+  assert.equal(e.totalPence, 90_000_00);
+  assert.equal(e.unprotectedPence, 5_000_00);
 });
