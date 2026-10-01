@@ -31,6 +31,9 @@ jobs:
         run: npx expo export -p web
         env:
           GH_PAGES_BASE_URL: /ratedrift
+          # Repository variables. Leave unset to keep every feature free.
+          EXPO_PUBLIC_LS_CHECKOUT_URL: ${{ vars.LS_CHECKOUT_URL }}
+          EXPO_PUBLIC_LS_PRODUCT_ID: ${{ vars.LS_PRODUCT_ID }}
 
       # 404.html ships from public/. _sitemap.html and +not-found.html are
       # expo-router scaffolding, not pages we want crawled or served.
