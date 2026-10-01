@@ -163,6 +163,36 @@ export function taxBreakdown(accounts: Account[], profile: TaxProfile): TaxBreak
   };
 }
 
+/**
+ * Interest per year lost by letting accounts drift, after estimated tax. Works as
+ * the difference between the after-tax interest now and after the drift, so the
+ * Personal Savings Allowance and ISA shielding are respected: a loss that only
+ * eats into untaxed interest costs the full amount, one above the allowance
+ * costs it net of the band's rate. Pass `onlyId` to drift just one account.
+ */
+export function netAtRiskPence(accounts: Account[], profile: TaxProfile, onlyId?: string): number {
+  const drifted = accounts.map((a) =>
+    onlyId === undefined || a.id === onlyId ? { ...a, aer: Math.min(a.aer, rateAfterDrift(a)) } : a,
+  );
+  return taxBreakdown(accounts, profile).netPence - taxBreakdown(drifted, profile).netPence;
+}
+
+/**
+ * After-tax cost of one deadline: the account's after-tax drift cost, scaled by
+ * how much of that account's gross drift this deadline accounts for.
+ */
+export function netDeadlineAtRiskPence(
+  accounts: Account[],
+  profile: TaxProfile,
+  deadline: Deadline,
+): number {
+  const account = accounts.find((a) => a.id === deadline.accountId);
+  if (!account) return 0;
+  const gross = atRiskPence(account);
+  if (gross <= 0) return 0;
+  return roundPence(netAtRiskPence(accounts, profile, account.id) * Math.min(1, deadline.atRiskPence / gross));
+}
+
 // ---- Formatting ----
 
 export function formatPence(pence: number): string {
