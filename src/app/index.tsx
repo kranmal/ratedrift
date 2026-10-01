@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 
 import { EmptyState } from '@/components/empty-state';
@@ -7,16 +8,20 @@ import { Screen } from '@/components/screen';
 import { SeoHead } from '@/components/seo-head';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { UnlockModal } from '@/components/unlock-modal';
 import { Spacing } from '@/constants/theme';
 import { useNow } from '@/hooks/use-now';
 import { buildIcs } from '@/lib/ics';
 import { formatPence, getDeadlines, totalAtRiskPence } from '@/lib/interest';
+import { usePro } from '@/lib/pro';
 import { seedDemoAccounts, useStore } from '@/lib/store';
 
 export default function HomeScreen() {
   const router = useRouter();
   const now = useNow();
   const store = useStore();
+  const { hasPro } = usePro();
+  const [unlocking, setUnlocking] = useState(false);
 
   const deadlines = getDeadlines(store.accounts, now);
   const atRisk = totalAtRiskPence(store.accounts);
@@ -27,7 +32,7 @@ export default function HomeScreen() {
     <>
       <SeoHead
         title="RateDrift — catch savings bonuses and fixed bonds before they expire"
-        description="Track when your savings bonus rates end and fixed bonds mature, see what doing nothing costs you per year, and check your FSCS cover. Free, no sign-up, nothing leaves your device."
+        description="Track when your savings bonus rates end and fixed bonds mature, see what doing nothing costs you per year, and check your FSCS cover. No sign-up, and your savings data never leaves your device."
       />
       <Screen
         title="RateDrift"
@@ -55,7 +60,7 @@ export default function HomeScreen() {
                 3. Check which accounts share an FSCS banking licence, and add the deadlines to your calendar with reminders.
               </ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                Free, no sign-up, no bank connection. Everything stays on your device. RateDrift tracks what you already hold; it does not recommend products.
+                No sign-up, no bank connection. Your savings data stays on your device. RateDrift tracks what you already hold; it does not recommend products.
               </ThemedText>
             </ThemedView>
           </>
@@ -97,11 +102,21 @@ export default function HomeScreen() {
             </View>
 
             {Platform.OS === 'web' && upcomingIcs ? (
-              <PrimaryButton
-                label="Add deadlines to my calendar (.ics)"
-                variant="secondary"
-                onPress={() => downloadIcs(upcomingIcs)}
-              />
+              <>
+                <PrimaryButton
+                  label={hasPro ? 'Add deadlines to my calendar (.ics)' : 'Unlock calendar reminders'}
+                  variant="secondary"
+                  onPress={() => (hasPro ? downloadIcs(upcomingIcs) : setUnlocking(true))}
+                />
+                <UnlockModal
+                  visible={unlocking}
+                  onClose={() => setUnlocking(false)}
+                  onUnlocked={() => {
+                    setUnlocking(false);
+                    downloadIcs(upcomingIcs);
+                  }}
+                />
+              </>
             ) : null}
 
             <ThemedText type="small" themeColor="textSecondary">
