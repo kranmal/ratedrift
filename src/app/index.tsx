@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 
 import { EmptyState } from '@/components/empty-state';
 import { PrimaryButton } from '@/components/primary-button';
@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useNow } from '@/hooks/use-now';
+import { buildIcs } from '@/lib/ics';
 import { formatPence, getDeadlines, totalAtRiskPence } from '@/lib/interest';
 import { seedDemoAccounts, useStore } from '@/lib/store';
 
@@ -19,6 +20,7 @@ export default function HomeScreen() {
 
   const deadlines = getDeadlines(store.accounts, now);
   const atRisk = totalAtRiskPence(store.accounts);
+  const upcomingIcs = buildIcs(store.accounts, now);
   const lapsed = deadlines.filter((d) => d.daysAway < 0).length;
 
   return (
@@ -79,6 +81,14 @@ export default function HomeScreen() {
               })}
             </View>
 
+            {Platform.OS === 'web' && upcomingIcs ? (
+              <PrimaryButton
+                label="Add deadlines to my calendar (.ics)"
+                variant="secondary"
+                onPress={() => downloadIcs(upcomingIcs)}
+              />
+            ) : null}
+
             <ThemedText type="small" themeColor="textSecondary">
               Maturity figures assume a matured fixed bond rolls into 1.5%, which is an assumption,
               not a quoted rate. Tax is estimated from the Personal Savings Allowance only.
@@ -88,6 +98,18 @@ export default function HomeScreen() {
       </Screen>
     </>
   );
+}
+
+/** Saves the calendar file in the browser. Native has no download path, so the button is web-only. */
+function downloadIcs(content: string) {
+  const url = URL.createObjectURL(new Blob([content], { type: 'text/calendar;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'ratedrift-deadlines.ics';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function describeDays(days: number): string {
