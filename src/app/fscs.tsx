@@ -21,7 +21,7 @@ export default function FscsScreen() {
     <>
       <SeoHead
         title="FSCS cover — RateDrift"
-        description="FSCS protection is per banking licence, not per brand. See which of your savings sit under the same licence and how much is above the £85,000 limit."
+        description="FSCS protection is per banking licence, not per brand. See which of your savings sit under the same licence and how much is above the £120,000 limit."
         path="fscs"
       />
       <Screen
@@ -57,6 +57,13 @@ export default function FscsScreen() {
                       another bank you hold, so check it with the FSCS.
                     </ThemedText>
                   ) : null}
+                  {entry.unlisted ? null : (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {entry.verified
+                        ? `Brands checked ${VERIFIED_ON}: ${entry.source}.`
+                        : 'Brand list not yet verified against a first-party source.'}
+                    </ThemedText>
+                  )}
                   {entry.caution ? (
                     <ThemedText type="small" themeColor="textSecondary">
                       {entry.caution}
@@ -67,7 +74,8 @@ export default function FscsScreen() {
             </View>
 
             <ThemedText type="small" themeColor="textSecondary">
-              Brand-to-licence mapping last verified: {VERIFIED_ON}. Mappings change when banks are
+              Brand-to-licence mapping last reviewed {VERIFIED_ON}, and only the groups marked as checked
+              above were confirmed against a bank&apos;s own FSCS page. Mappings change when banks are
               acquired, so confirm yours with the FSCS before relying on this.
             </ThemedText>
             <ThemedText
