@@ -1,29 +1,32 @@
 /**
  * FSCS protection is per **banking licence**, not per brand. Several familiar
- * high-street names share one licence, so £85,000 in Halifax and £85,000 in
- * Birmingham Midshires is NOT £170,000 of cover — it is one £85,000 limit with
- * £85,000 exposed.
+ * high-street names share one licence, so £120,000 in Halifax and £120,000 in
+ * Birmingham Midshires is NOT £240,000 of cover — it is one £120,000 limit with
+ * £120,000 exposed.
  *
  * ---------------------------------------------------------------------------
- * THIS TABLE IS A SEED, NOT AN AUTHORITY.
+ * THIS TABLE IS PARTLY VERIFIED, NOT AN AUTHORITY.
  *
- * Brand-to-licence mappings change whenever a bank is acquired or restructured,
- * and several moved recently. Verify every group against the official FSCS bank
- * and savings checker before trusting it, and bump VERIFIED_ON when you do:
+ * Brand-to-licence mappings change whenever a bank is acquired or restructured.
+ * There is no official bulk list, so groups are checked one at a time against
+ * the bank's own FSCS page. A group with `verified` set was checked on
+ * VERIFIED_ON (see its `source`); every other group is still a best guess.
+ * Re-check and bump VERIFIED_ON when you change a group:
  *
  *   https://www.fscs.org.uk/check/check-your-money-is-protected/
  *
- * The UI must always show VERIFIED_ON next to any exposure warning and link to
- * the checker above. Never present this as definitive.
+ * The UI must always show VERIFIED_ON and per-group status next to any exposure
+ * warning and link to the checker above. Never present this as definitive.
  * ---------------------------------------------------------------------------
  */
 
 import type { Account } from '@/types/models';
 
-/** Last date a human checked this table against the FSCS checker. */
-export const VERIFIED_ON = 'unverified';
+/** Last date any group in this table was checked against a first-party source. */
+export const VERIFIED_ON = '2026-10-01';
 
-export const FSCS_LIMIT_PENCE = 85_000_00;
+/** £120,000 per person per authorised firm since 1 Dec 2025 (was £85,000). */
+export const FSCS_LIMIT_PENCE = 120_000_00;
 
 export interface LicenceGroup {
   id: string;
@@ -33,32 +36,67 @@ export interface LicenceGroup {
   brands: string[];
   /** Set when a mapping is known to be in flux and needs checking first. */
   caution?: string;
+  /** True when brand membership was confirmed against `source` on VERIFIED_ON. */
+  verified?: boolean;
+  /** Where it was confirmed, e.g. the bank's own FSCS page. */
+  source?: string;
 }
 
 export const LICENCE_GROUPS: LicenceGroup[] = [
   {
     id: 'bank-of-scotland',
     name: 'Bank of Scotland plc',
-    brands: ['Halifax', 'Bank of Scotland', 'Birmingham Midshires', 'Intelligent Finance'],
+    brands: [
+      'Halifax',
+      'Bank of Scotland',
+      'Birmingham Midshires',
+      'Intelligent Finance',
+      'Bank of Scotland Private Banking',
+      'Bank of Wales',
+    ],
+    verified: true,
+    source: 'Halifax FSCS page (halifax.co.uk/fscs.html) and the Bank of Scotland FSCS information sheet',
   },
-  { id: 'lloyds', name: 'Lloyds Bank plc', brands: ['Lloyds Bank', 'Scottish Widows Bank'] },
-  { id: 'barclays', name: 'Barclays Bank UK plc', brands: ['Barclays'] },
+  {
+    id: 'lloyds',
+    name: 'Lloyds Bank plc',
+    brands: ['Lloyds Bank', 'Scottish Widows Bank'],
+    caution:
+      'Lloyds accounts with a sort code starting 11 are Bank of Scotland plc, not Lloyds Bank plc — check your sort code.',
+  },
+  {
+    id: 'barclays',
+    name: 'Barclays Bank UK plc',
+    brands: ['Barclays', 'Tesco Bank'],
+    caution: 'Tesco Bank savings moved to Barclays — confirm yours has transferred.',
+  },
   {
     id: 'hsbc-uk',
     name: 'HSBC UK Bank plc',
-    brands: ['HSBC', 'first direct', 'M&S Bank'],
+    brands: ['HSBC', 'first direct', 'M&S Bank', 'HSBC Private Bank'],
+    verified: true,
+    source: 'HSBC and M&S Bank FSCS pages (hsbc.co.uk/fscs, bank.marksandspencer.com/about-us/fscs-protection)',
   },
-  { id: 'natwest', name: 'National Westminster Bank plc', brands: ['NatWest'] },
+  {
+    id: 'natwest',
+    name: 'National Westminster Bank plc',
+    brands: ['NatWest', 'Ulster Bank', "Sainsbury's Bank", 'Mettle'],
+    verified: true,
+    source: 'NatWest FSCS information; Sainsbury\'s Bank transfer scheme (savings moved to NatWest)',
+  },
   { id: 'rbs', name: 'The Royal Bank of Scotland plc', brands: ['Royal Bank of Scotland'] },
   { id: 'santander-uk', name: 'Santander UK plc', brands: ['Santander', 'cahoot'] },
-  { id: 'nationwide', name: 'Nationwide Building Society', brands: ['Nationwide'] },
+  {
+    id: 'nationwide',
+    name: 'Nationwide Building Society',
+    brands: ['Nationwide', 'Virgin Money', 'Clydesdale Bank', 'Yorkshire Bank'],
+    caution:
+      'Virgin Money is confirmed combined with Nationwide; Clydesdale and Yorkshire Bank are Virgin Money brands but are not named on Nationwide\'s page — check them.',
+    verified: true,
+    source: 'Nationwide FSCS page (nationwide.co.uk)',
+  },
   { id: 'tsb', name: 'TSB Bank plc', brands: ['TSB'] },
   { id: 'co-op', name: 'The Co-operative Bank plc', brands: ['The Co-operative Bank', 'smile'] },
-  {
-    id: 'clydesdale',
-    name: 'Clydesdale Bank plc',
-    brands: ['Virgin Money', 'Clydesdale Bank', 'Yorkshire Bank'],
-  },
   { id: 'metro', name: 'Metro Bank plc', brands: ['Metro Bank'] },
   { id: 'starling', name: 'Starling Bank Limited', brands: ['Starling Bank'] },
   { id: 'monzo', name: 'Monzo Bank Limited', brands: ['Monzo'] },
@@ -99,7 +137,8 @@ export const LICENCE_GROUPS: LicenceGroup[] = [
     id: 'chase-uk',
     name: 'J.P. Morgan Europe Limited',
     brands: ['Chase'],
-    caution: 'Chase UK sits under a J.P. Morgan entity — confirm which one before relying on this.',
+    verified: true,
+    source: 'Chase UK FSCS page (chase.co.uk)',
   },
   {
     id: 'bank-of-ireland-uk',
@@ -112,18 +151,6 @@ export const LICENCE_GROUPS: LicenceGroup[] = [
     name: 'OneSavings Bank plc',
     brands: ['Kent Reliance', 'Charter Savings Bank'],
     caution: 'OSB Group restructured its licences — confirm whether Charter Savings still shares this one.',
-  },
-  {
-    id: 'tesco-bank',
-    name: 'Tesco Personal Finance plc',
-    brands: ['Tesco Bank'],
-    caution: 'Tesco Bank savings moved to Barclays. If yours transferred, the licence is Barclays — check.',
-  },
-  {
-    id: 'sainsburys-bank',
-    name: "Sainsbury's Bank plc",
-    brands: ["Sainsbury's Bank"],
-    caution: "Sainsbury's Bank savings moved to NatWest. Confirm which licence now holds yours.",
   },
   { id: 'other', name: 'Other / not listed', brands: [] },
 ];
@@ -151,6 +178,9 @@ export interface GroupExposure {
   unprotectedPence: number;
   accountIds: string[];
   caution?: string;
+  /** Whether the group's brands were confirmed against a first-party source. */
+  verified?: boolean;
+  source?: string;
   /** True when the brand is not in the table, so its licence is assumed, not known. */
   unlisted?: boolean;
 }
@@ -178,6 +208,8 @@ export function getFscsExposure(accounts: Account[]): GroupExposure[] {
         unprotectedPence: 0,
         accountIds: [],
         caution: group?.caution,
+        verified: group?.verified,
+        source: group?.source,
         unlisted: group ? undefined : true,
       };
       byGroup.set(id, entry);

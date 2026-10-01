@@ -143,13 +143,13 @@ test('portfolio at-risk sums across accounts', () => {
 test('brands sharing a licence are totalled together', () => {
   const accounts = [
     account({ id: 'h', provider: 'Halifax', licenceGroupId: 'bank-of-scotland', balancePence: 50_000_00 }),
-    account({ id: 'bm', provider: 'Birmingham Midshires', licenceGroupId: 'bank-of-scotland', balancePence: 46_000_00 }),
+    account({ id: 'bm', provider: 'Birmingham Midshires', licenceGroupId: 'bank-of-scotland', balancePence: 76_000_00 }),
   ];
   const [exposure] = getFscsExposure(accounts);
   assert.equal(exposure.groupName, 'Bank of Scotland plc');
-  assert.equal(exposure.totalPence, 96_000_00);
-  assert.equal(exposure.unprotectedPence, 11_000_00);
-  assert.equal(formatPence(exposure.unprotectedPence), '£11,000');
+  assert.equal(exposure.totalPence, 126_000_00);
+  assert.equal(exposure.unprotectedPence, 6_000_00);
+  assert.equal(formatPence(exposure.unprotectedPence), '£6,000');
 });
 
 test('a balance exactly on the FSCS limit is fully protected', () => {
@@ -159,8 +159,8 @@ test('a balance exactly on the FSCS limit is fully protected', () => {
 
 test('separate licences each get their own limit', () => {
   const accounts = [
-    account({ id: 'a', licenceGroupId: 'barclays', balancePence: 80_000_00 }),
-    account({ id: 'b', licenceGroupId: 'nationwide', balancePence: 80_000_00 }),
+    account({ id: 'a', licenceGroupId: 'barclays', balancePence: 110_000_00 }),
+    account({ id: 'b', licenceGroupId: 'nationwide', balancePence: 110_000_00 }),
   ];
   const exposure = getFscsExposure(accounts);
   assert.equal(exposure.length, 2);
@@ -170,7 +170,7 @@ test('separate licences each get their own limit', () => {
 test('exposure is sorted worst-breach first', () => {
   const accounts = [
     account({ id: 'ok', licenceGroupId: 'barclays', balancePence: 10_000_00 }),
-    account({ id: 'bad', licenceGroupId: 'nationwide', balancePence: 120_000_00 }),
+    account({ id: 'bad', licenceGroupId: 'nationwide', balancePence: 130_000_00 }),
   ];
   assert.equal(getFscsExposure(accounts)[0].licenceGroupId, 'nationwide');
 });
@@ -183,8 +183,18 @@ test('an unknown licence is flagged unlisted and keyed by provider', () => {
 });
 
 test('a volatile mapping carries its caution through to the exposure', () => {
-  const accounts = [account({ licenceGroupId: 'tesco-bank', balancePence: 1_000_00 })];
-  assert.match(getFscsExposure(accounts)[0].caution ?? '', /Barclays/);
+  const accounts = [account({ licenceGroupId: 'barclays', balancePence: 1_000_00 })];
+  assert.match(getFscsExposure(accounts)[0].caution ?? '', /Tesco/);
+});
+
+test('acquired brands resolve to the acquirer licence', () => {
+  assert.equal(findGroupByBrand('Sainsbury\'s Bank')?.id, 'natwest');
+  assert.equal(findGroupByBrand('Virgin Money')?.id, 'nationwide');
+  assert.equal(findGroupByBrand('Tesco Bank')?.id, 'barclays');
+});
+
+test('the FSCS limit is £120,000', () => {
+  assert.equal(FSCS_LIMIT_PENCE, 120_000_00);
 });
 
 test('brand lookup is case-insensitive and finds shared licences', () => {
@@ -265,17 +275,17 @@ test('an empty portfolio is all zeroes, not NaN', () => {
 });
 
 test('unlisted banks are each their own licence, never pooled into one false breach', () => {
-  const a = account({ id: 'a', provider: 'Acme Bank', licenceGroupId: 'other', balancePence: 60_000_00 });
-  const b = account({ id: 'b', provider: 'Zeta Savings', licenceGroupId: 'other', balancePence: 60_000_00 });
+  const a = account({ id: 'a', provider: 'Acme Bank', licenceGroupId: 'other', balancePence: 100_000_00 });
+  const b = account({ id: 'b', provider: 'Zeta Savings', licenceGroupId: 'other', balancePence: 100_000_00 });
   const exposure = getFscsExposure([a, b]);
   assert.equal(exposure.length, 2);
   assert.ok(exposure.every((e) => e.unprotectedPence === 0 && e.unlisted === true));
 });
 
 test('two accounts at the same unlisted bank still total together', () => {
-  const a = account({ id: 'a', provider: 'Acme Bank', licenceGroupId: 'other', balancePence: 60_000_00 });
-  const b = account({ id: 'b', provider: 'ACME bank ', licenceGroupId: 'other', balancePence: 30_000_00 });
+  const a = account({ id: 'a', provider: 'Acme Bank', licenceGroupId: 'other', balancePence: 90_000_00 });
+  const b = account({ id: 'b', provider: 'ACME bank ', licenceGroupId: 'other', balancePence: 35_000_00 });
   const [e] = getFscsExposure([a, b]);
-  assert.equal(e.totalPence, 90_000_00);
+  assert.equal(e.totalPence, 125_000_00);
   assert.equal(e.unprotectedPence, 5_000_00);
 });

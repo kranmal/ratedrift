@@ -67,6 +67,9 @@ export function useStore(): State {
   useEffect(() => {
     const listener = () => setTick((t) => t + 1);
     listeners.add(listener);
+    // load() may have finished between this render and the subscription, so
+    // re-sync once; otherwise the screen can sit on its loading state forever.
+    listener();
     return () => {
       listeners.delete(listener);
     };
@@ -149,7 +152,7 @@ export function seedDemoAccounts() {
       licenceGroupId: 'bank-of-scotland',
       product: '1 Year Fixed',
       kind: 'fixed',
-      balancePence: 46_000_00,
+      balancePence: 76_000_00,
       aer: 5.05,
       maturesOn: '2027-02-01',
     },
