@@ -13,7 +13,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import {
   annualInterestPence,
-  atRiskPence,
+  netAtRiskPence,
   formatPence,
   rateAfterDrift,
   taxBreakdown,
@@ -89,7 +89,7 @@ export default function AccountsScreen() {
                   </ThemedText>
                   {drifts ? (
                     <ThemedText type="small" themeColor="textSecondary">
-                      Drops to {after}% → losing {formatPence(atRiskPence(account))}/yr
+                      Drops to {after}% → losing {formatPence(netAtRiskPence(store.accounts, store.tax, account.id))}/yr
                     </ThemedText>
                   ) : null}
                   </Pressable>

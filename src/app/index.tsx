@@ -12,7 +12,7 @@ import { UnlockModal } from '@/components/unlock-modal';
 import { Spacing } from '@/constants/theme';
 import { useNow } from '@/hooks/use-now';
 import { buildIcs } from '@/lib/ics';
-import { formatPence, getDeadlines, totalAtRiskPence } from '@/lib/interest';
+import { formatPence, getDeadlines, netAtRiskPence, netDeadlineAtRiskPence } from '@/lib/interest';
 import { usePro } from '@/lib/pro';
 import { seedDemoAccounts, useStore } from '@/lib/store';
 
@@ -24,7 +24,7 @@ export default function HomeScreen() {
   const [unlocking, setUnlocking] = useState(false);
 
   const deadlines = getDeadlines(store.accounts, now);
-  const atRisk = totalAtRiskPence(store.accounts);
+  const atRisk = netAtRiskPence(store.accounts, store.tax);
   const upcomingIcs = buildIcs(store.accounts, now);
   const lapsed = deadlines.filter((d) => d.daysAway < 0).length;
 
@@ -72,7 +72,7 @@ export default function HomeScreen() {
               </ThemedText>
               <ThemedText style={styles.heroFigure}>{formatPence(atRisk)}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                per year, in lost interest
+                per year in lost interest, after estimated tax
               </ThemedText>
             </ThemedView>
 
@@ -95,7 +95,7 @@ export default function HomeScreen() {
                         {describeDays(deadline.daysAway)}
                       </ThemedText>
                     </View>
-                    <ThemedText type="smallBold">{formatPence(deadline.atRiskPence)}/yr</ThemedText>
+                    <ThemedText type="smallBold">{formatPence(netDeadlineAtRiskPence(store.accounts, store.tax, deadline))}/yr</ThemedText>
                   </ThemedView>
                 );
               })}
@@ -121,7 +121,7 @@ export default function HomeScreen() {
 
             <ThemedText type="small" themeColor="textSecondary">
               Maturity figures assume a matured fixed bond rolls into 1.5%, which is an assumption,
-              not a quoted rate. Tax is estimated from the Personal Savings Allowance only.
+              not a quoted rate. Costs are after estimated tax, using the tax band you pick on the Accounts tab and the Personal Savings Allowance only.
             </ThemedText>
           </>
         )}

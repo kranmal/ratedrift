@@ -8,6 +8,8 @@ import {
   daysUntil,
   formatPence,
   getDeadlines,
+  netAtRiskPence,
+  netDeadlineAtRiskPence,
   rateAfterDrift,
   taxBreakdown,
   totalAtRiskPence,
@@ -288,4 +290,35 @@ test('two accounts at the same unlisted bank still total together', () => {
   const [e] = getFscsExposure([a, b]);
   assert.equal(e.totalPence, 125_000_00);
   assert.equal(e.unprotectedPence, 5_000_00);
+});
+
+test('after-tax at-risk changes with the tax band', () => {
+  // £50,000 at 5% dropping to 1%: £2,000 gross loss, all above any allowance.
+  const accounts = [
+    account({ balancePence: 50_000_00, aer: 5, postBonusAer: 1, bonusEndsOn: '2027-01-01' }),
+  ];
+  const at = (band: 'none' | 'basic' | 'higher' | 'additional') =>
+    netAtRiskPence(accounts, { band, psaUsedPence: 0 });
+  assert.equal(at('none'), 2_000_00);
+  // Basic: £2,500 interest now is £1,500 over the £1,000 allowance; after, £500 is fully covered.
+  assert.equal(at('basic'), 1_700_00);
+  assert.ok(at('higher') < at('basic'));
+  assert.ok(at('additional') < at('higher'));
+  assert.equal(at('additional'), 1_100_00);
+});
+
+test('ISA drift is never taxed', () => {
+  const accounts = [
+    account({ kind: 'cash-isa', balancePence: 50_000_00, aer: 5, postBonusAer: 1, bonusEndsOn: '2027-01-01' }),
+  ];
+  assert.equal(netAtRiskPence(accounts, { band: 'additional', psaUsedPence: 0 }), 2_000_00);
+});
+
+test('per-deadline net cost scales with the band', () => {
+  const accounts = [
+    account({ balancePence: 50_000_00, aer: 5, postBonusAer: 1, bonusEndsOn: '2027-01-01' }),
+  ];
+  const [d] = getDeadlines(accounts, NOW);
+  assert.equal(netDeadlineAtRiskPence(accounts, { band: 'none', psaUsedPence: 0 }, d), 2_000_00);
+  assert.equal(netDeadlineAtRiskPence(accounts, { band: 'additional', psaUsedPence: 0 }, d), 1_100_00);
 });
