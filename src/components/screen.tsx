@@ -66,7 +66,8 @@ const styles = StyleSheet.create({
   },
   contentWeb: {
     maxWidth: MaxContentWidth,
-    paddingTop: Spacing.six,
+    // The tab bar is absolutely positioned over the page, so clear its height with room to spare.
+    paddingTop: Spacing.six + Spacing.five,
   },
   header: {
     flexDirection: 'row',
