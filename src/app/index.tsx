@@ -43,6 +43,21 @@ export default function HomeScreen() {
             <EmptyState message="Add the savings accounts you hold and RateDrift will tell you what each one costs you if you let it drift." />
             <PrimaryButton label="Add your first account" onPress={() => router.push('/accounts')} />
             <PrimaryButton label="Load demo accounts" variant="secondary" onPress={seedDemoAccounts} />
+            <ThemedView type="backgroundElement" style={styles.how}>
+              <ThemedText type="smallBold">How it works</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                1. Type in your savings accounts, including when any bonus rate ends or fixed bond matures.
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                2. See what letting each one drift costs you per year, and which deadline is next.
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                3. Check which accounts share an FSCS banking licence, and add the deadlines to your calendar with reminders.
+              </ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                Free, no sign-up, no bank connection. Everything stays on your device. RateDrift tracks what you already hold; it does not recommend products.
+              </ThemedText>
+            </ThemedView>
           </>
         ) : (
           <>
@@ -131,6 +146,7 @@ const styles = StyleSheet.create({
     lineHeight: 50,
     fontWeight: '700',
   },
+  how: { padding: Spacing.three, borderRadius: Spacing.three, gap: Spacing.two },
   list: { gap: Spacing.two },
   row: {
     flexDirection: 'row',
