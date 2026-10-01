@@ -1,7 +1,6 @@
 import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AdUnit } from './ad-unit';
 import { ThemeToggleButton } from './theme-toggle-button';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
@@ -37,8 +36,6 @@ export function Screen({ title, subtitle, children }: Props) {
           </View>
 
           {children}
-
-          {Platform.OS === 'web' && <AdUnit />}
 
           {Platform.OS === 'web' && (
             <ThemedText
